@@ -281,10 +281,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,Blink
         <label>确认密码</label>
         <input type="password" class="input-field" id="regPass2" placeholder="再次输入密码">
       </div>
-      <div class="input-group">
-        <label>邀请码（选填）</label>
-        <input type="text" class="input-field" id="regInviteCode" placeholder="有邀请码？输入双方得积分">
-      </div>
       <button class="btn btn-success" onclick="doRegister()">🎉 立即注册</button>
     </div>
     <div style="margin-top:20px;text-align:center">
@@ -492,6 +488,78 @@ const POINTS_PER_DECRYPT = 30;
 const ADMIN_DEFAULT_USER = 'admin';
 const ADMIN_DEFAULT_PASS = 'admin888';
 
+// ==================== Gist 数据同步 ====================
+const GIST_ID = '66cd9d8ea3a72200e7a65e27a23d917c';
+const GIST_RAW_URL = 'https://gist.githubusercontent.com/longhao142857/66cd9d8ea3a72200e7a65e27a23d917c/raw/anyubao_data.json';
+
+var syncEnabled = true;
+var syncPending = false;
+
+function syncToGist() {
+  if (!syncEnabled) return;
+  var data = {
+    version: 1,
+    updated: new Date().toISOString(),
+    users: JSON.parse(localStorage.getItem(USERS_KEY) || '{}'),
+    mails: JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]')
+  };
+  var content = JSON.stringify(data);
+  // 通过表单提交更新 gist
+  var formData = new FormData();
+  formData.append('content', content);
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'Bearer ' + (localStorage.getItem('anyu_gh_token') || ''),
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    body: JSON.stringify({
+      description: '暗语宝加密通讯数据存储 - 请勿删除',
+      files: { 'anyubao_data.json': { content: content } }
+    })
+  }).then(function(r) { 
+    if (r.ok) showToast('已同步到云端', 'success'); 
+  }).catch(function() {});
+}
+
+function loadFromGist(callback) {
+  fetch(GIST_RAW_URL + '?t=' + Date.now(), {cache: 'no-store'})
+    .then(function(r) { return r.json(); })
+    .then(function(cloud) {
+      var localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+      var localMails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+      var cloudUsers = cloud.users || {};
+      var cloudMails = cloud.mails || [];
+      
+      // 合并：取两边的并集（注册用户），以cloud为准去重
+      var mergedUsers = {};
+      Object.keys(localUsers).forEach(function(u) { mergedUsers[u] = localUsers[u]; });
+      Object.keys(cloudUsers).forEach(function(u) { 
+        if (!mergedUsers[u] || (cloudUsers[u].regTime && mergedUsers[u].regTime && cloudUsers[u].regTime > mergedUsers[u].regTime)) {
+          mergedUsers[u] = cloudUsers[u];
+        }
+      });
+      localStorage.setItem(USERS_KEY, JSON.stringify(mergedUsers));
+      
+      // 邮件合并去重
+      var allMails = localMails.concat(cloudMails);
+      var seen = {};
+      var deduped = allMails.filter(function(m) {
+        if (seen[m.id]) return false;
+        seen[m.id] = true;
+        return true;
+      });
+      localStorage.setItem(EMAILS_KEY, JSON.stringify(deduped));
+      
+      if (callback) callback();
+    })
+    .catch(function() {
+      if (callback) callback();
+    });
+}
+
+function GIST_URL() { return GIST_RAW_URL; }
+
 // ==================== 编码表生成 ====================
 // 完整CJK基本区 + ASCII可打印字符 = 21087字符
 var CT = {}; // 字符→编码
@@ -531,18 +599,21 @@ function init() {
   initCryptoTable();
   initAdmin();
   
-  // 检查登录状态
-  var session = getSession();
-  if (session && session.user) {
-    showMainApp();
-  } else {
-    showLogin();
-  }
-  
-  // 启动页动画
-  setTimeout(function() {
-    document.getElementById('splash').classList.add('hide');
-  }, 1500);
+  // 先尝试从Gist加载云端数据
+  loadFromGist(function() {
+    var session = getSession();
+    if (session && session.user) {
+      showMainApp();
+    } else {
+      showLogin();
+    }
+    
+    // 启动页动画
+    setTimeout(function() {
+      var splash = document.getElementById('splash');
+      if (splash) splash.classList.add('hide');
+    }, 1500);
+  });
 }
 
 function initAdmin() {
@@ -618,6 +689,7 @@ function saveUserData(user, data) {
   var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
   users[user] = data;
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  syncToGist();
 }
 
 function getCurrentUser() {
@@ -670,6 +742,7 @@ function doLogin() {
   }
   
   setSession(user);
+  syncToGist();
   showToast('登录成功', 'success');
   showMainApp();
 }
@@ -692,17 +765,10 @@ function doRegister() {
     regTime: new Date().toLocaleString(),
     friends: [],
     sentCount: 0,
-    receivedCount: 0,
-    inviteCount: 0,
-    inviteList: []
+    receivedCount: 0
   };
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  
-  // 处理邀请码
-  var inviteCode = document.getElementById('regInviteCode').value.trim();
-  if (inviteCode) {
-    processInviteRegistration(user, inviteCode);
-  }
+  syncToGist();
   
   showToast('注册成功！赠送' + POINTS_REGISTER + '积分', 'success');
   document.getElementById('loginUser').value = user;
@@ -940,6 +1006,7 @@ function sendMail() {
     time: Date.now()
   });
   localStorage.setItem(EMAILS_KEY, JSON.stringify(mails));
+  syncToGist();
   
   // 扣除积分
   if (encryptEnabled) {
@@ -998,6 +1065,7 @@ function openMail(id) {
   currentMail = mail;
   mail.read = true;
   localStorage.setItem(EMAILS_KEY, JSON.stringify(mails));
+  syncToGist();
   
   var container = document.getElementById('appContent');
   var html = '<div class="mail-detail">';
@@ -1082,6 +1150,7 @@ function clearAllMails() {
   var allMails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
   var filtered = allMails.filter(function(m) { return m.to !== user; });
   localStorage.setItem(EMAILS_KEY, JSON.stringify(filtered));
+  syncToGist();
   showToast('收件箱已清空', 'success');
   renderInbox(document.getElementById('appContent'));
 }
@@ -1166,9 +1235,6 @@ function renderProfile(container) {
   html += '<div class="menu-list">';
   html += '<div class="menu-item" onclick="showRecharge()">';
   html += '<div class="menu-item-left"><div class="menu-item-icon">💰</div><div class="menu-item-text">积分充值</div></div>';
-  html += '<div class="menu-item-arrow">›</div></div>';
-  html += '<div class="menu-item" onclick="showInvite()">';
-  html += '<div class="menu-item-left"><div class="menu-item-icon">🎁</div><div class="menu-item-text">邀请好友</div></div>';
   html += '<div class="menu-item-arrow">›</div></div>';
   html += '<div class="menu-item" onclick="showChangePwd()">';
   html += '<div class="menu-item-left"><div class="menu-item-icon">🔑</div><div class="menu-item-text">修改密码</div></div>';
@@ -1357,10 +1423,57 @@ function renderAdminDash() {
   html += '<div class="row"><span>邮件总数</span><span>' + mails.length + '</span></div>';
   html += '<div class="row"><span>待审充值</span><span>' + pending + '</span></div>';
   html += '</div>';
-  html += '<div style="margin-top:16px;text-align:center">';
+  html += '<div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
+  html += '<button class="btn btn-primary" onclick="adminRefreshFromCloud()">🔄 从云端刷新</button>';
   html += '<button class="btn btn-error" onclick="confirmResetData()">🗑️ 重置所有数据</button>';
   html += '</div>';
   document.getElementById('adminDashContent').innerHTML = html;
+}
+
+// ==================== 管理员云端同步 ====================
+function adminRefreshFromCloud() {
+  var btn = event.target;
+  btn.textContent = '\u540c\u6b65\u4e2d...';
+  btn.disabled = true;
+  var token = localStorage.getItem('anyu_gh_token') || '';
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    headers: { 'Authorization': 'Bearer ' + token, 'X-GitHub-Api-Version': '2022-11-28' }
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(gist) {
+      var cloud = JSON.parse(gist.files['anyubao_data.json'].content);
+      var localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+      var localMails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+      var cloudUsers = cloud.users || {};
+      var cloudMails = cloud.mails || [];
+      var mergedUsers = {};
+      Object.keys(localUsers).forEach(function(u) { mergedUsers[u] = localUsers[u]; });
+      Object.keys(cloudUsers).forEach(function(u) {
+        if (!mergedUsers[u] || (cloudUsers[u].regTime && mergedUsers[u].regTime && cloudUsers[u].regTime > mergedUsers[u].regTime)) {
+          mergedUsers[u] = cloudUsers[u];
+        }
+      });
+      localStorage.setItem(USERS_KEY, JSON.stringify(mergedUsers));
+      var allMails = localMails.concat(cloudMails);
+      var seen = {};
+      var deduped = allMails.filter(function(m) {
+        if (seen[m.id]) return false;
+        seen[m.id] = true;
+        return true;
+      });
+      localStorage.setItem(EMAILS_KEY, JSON.stringify(deduped));
+      btn.textContent = '\u2705 \u5df2\u5237\u65b0';
+      showToast('\u5df2\u4ece\u4e91\u7aef\u5237\u65b0\uff0c\u6c47\u5408\u5b8c\u6210', 'success');
+      renderAdminUsers();
+      renderAdminMails();
+      renderAdminDash();
+      setTimeout(function() { btn.textContent = '\ud83d\udd04 \u4ece\u4e91\u7aef\u5237\u65b0'; btn.disabled = false; }, 2000);
+    })
+    .catch(function(err) {
+      btn.textContent = '\ud83d\udd04 \u4ece\u4e91\u7aef\u5237\u65b0';
+      btn.disabled = false;
+      showToast('\u4e91\u7aef\u540c\u6b65\u5931\u8d25: ' + (err.message || ''), 'error');
+    });
 }
 
 function confirmResetData() {
@@ -1374,6 +1487,7 @@ function doResetData() {
   localStorage.removeItem(SESSION_KEY);
   // 保留管理员账号
   initAdmin();
+  syncToGist();
   showToast('数据已重置', 'success');
   renderAdminDash();
   renderAdminUsers();
@@ -1484,14 +1598,15 @@ function deleteUser(username) {
   if (username === 'admin') { showToast('不能删除管理员账户', 'error'); return; }
   delete users[username];
   localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  syncToGist();
   
   // 删除该用户的所有邮件（作为发送方或接收方）
   var mails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
   mails = mails.filter(function(m) { return m.from !== username && m.to !== username; });
   localStorage.setItem(EMAILS_KEY, JSON.stringify(mails));
+  syncToGist();
   
   // 删除该用户的充值记录
-  localStorage.removeItem('recharge_' + username);
   
   // 如果当前登录的就是被删除的用户，强制退出
   var session = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
@@ -1505,112 +1620,6 @@ function deleteUser(username) {
   showToast('已删除用户 ' + username, 'success');
   renderAdminUsers();
   renderAdminDash();
-}
-
-// ==================== 邀请裂变功能 ====================
-const POINTS_INVITE_BONUS = 200;
-const POINTS_INVITED_BONUS = 100;
-
-function generateInviteCode(username) {
-  return 'AYB' + simpleHash(username).substr(0, 6).toUpperCase();
-}
-
-function getInviterByCode(code) {
-  if (!code || !code.startsWith('AYB')) return null;
-  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
-  for (var user in users) {
-    if (generateInviteCode(user) === code) return user;
-  }
-  return null;
-}
-
-function processInviteRegistration(newUser, inviteCode) {
-  if (!inviteCode) return;
-  var inviter = getInviterByCode(inviteCode);
-  if (!inviter || inviter === newUser) return;
-  var newUserData = getUserData(newUser);
-  newUserData.points += POINTS_INVITED_BONUS;
-  newUserData.invitedBy = inviter;
-  saveUserData(newUser, newUserData);
-  var inviterData = getUserData(inviter);
-  inviterData.points += POINTS_INVITE_BONUS;
-  inviterData.inviteCount = (inviterData.inviteCount || 0) + 1;
-  inviterData.inviteList = inviterData.inviteList || [];
-  inviterData.inviteList.push({user: newUser, time: new Date().toLocaleString(), code: inviteCode});
-  saveUserData(inviter, inviterData);
-}
-
-function showInvite() {
-  var user = getCurrentUser();
-  var data = getUserData(user);
-  var inviteCode = generateInviteCode(user);
-  var inviteCount = data.inviteCount || 0;
-  var inviteList = data.inviteList || [];
-  var container = document.getElementById('appContent');
-  var html = '<div class="card"><div class="card-title">🎁 邀请好友</div>';
-  html += '<div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:12px;padding:20px;margin-bottom:16px;color:#fff;text-align:center">';
-  html += '<div style="font-size:14px;opacity:0.9;margin-bottom:8px">我的专属邀请码</div>';
-  html += '<div style="font-size:28px;font-weight:800;letter-spacing:2px;margin-bottom:8px">' + inviteCode + '</div>';
-  html += '<div style="font-size:12px;opacity:0.8">好友注册时填写，双方得积分</div></div>';
-  html += '<div style="background:var(--surface-light);border-radius:12px;padding:16px;margin-bottom:16px">';
-  html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px">🎉 邀请奖励</div>';
-  html += '<div style="display:flex;justify-content:space-around;text-align:center">';
-  html += '<div><div style="font-size:24px;font-weight:800;color:var(--success)">+' + POINTS_INVITED_BONUS + '</div><div style="font-size:12px;color:var(--text-secondary)">好友得</div></div>';
-  html += '<div style="font-size:24px">🎁</div>';
-  html += '<div><div style="font-size:24px;font-weight:800;color:var(--success)">+' + POINTS_INVITE_BONUS + '</div><div style="font-size:12px;color:var(--text-secondary)">你得</div></div></div></div>';
-  html += '<div style="background:var(--surface-light);border-radius:12px;padding:16px;margin-bottom:16px">';
-  html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px">📊 邀请统计</div>';
-  html += '<div style="display:flex;justify-content:space-around;text-align:center">';
-  html += '<div><div style="font-size:28px;font-weight:800;color:var(--primary)">' + inviteCount + '</div><div style="font-size:12px;color:var(--text-secondary)">已邀请</div></div>';
-  html += '<div><div style="font-size:28px;font-weight:800;color:var(--gold)">' + (inviteCount * POINTS_INVITE_BONUS) + '</div><div style="font-size:12px;color:var(--text-secondary)">累计奖励</div></div></div></div>';
-  if (inviteList.length > 0) {
-    html += '<div style="background:var(--surface-light);border-radius:12px;padding:16px;margin-bottom:16px">';
-    html += '<div style="font-size:14px;font-weight:600;margin-bottom:12px">📋 邀请记录</div>';
-    inviteList.forEach(function(inv) {
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">';
-      html += '<div><div style="font-weight:600">' + escapeHtml(inv.user) + '</div><div style="font-size:12px;color:var(--text-muted)">' + inv.time + '</div></div>';
-      html += '<div style="color:var(--success);font-weight:700">+' + POINTS_INVITE_BONUS + '</div></div>';
-    });
-    html += '</div>';
-  }
-  html += '<div style="display:flex;gap:10px;margin-bottom:16px">';
-  html += '<button class="btn btn-primary" onclick="copyInviteCode()" style="flex:1">📋 复制邀请码</button>';
-  html += '<button class="btn btn-success" onclick="shareInvite()" style="flex:1">📤 分享海报</button></div>';
-  html += '<button class="btn btn-secondary" onclick="switchMainTab(\'profile\')">← 返回</button></div>';
-  container.innerHTML = html;
-}
-
-function copyInviteCode() {
-  var user = getCurrentUser();
-  var code = generateInviteCode(user);
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(code).then(function() { showToast('邀请码已复制', 'success'); });
-  } else {
-    var ta = document.createElement('textarea');
-    ta.value = code;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('邀请码已复制', 'success');
-  }
-}
-
-function shareInvite() {
-  var user = getCurrentUser();
-  var code = generateInviteCode(user);
-  var text = '🔐 我在用「暗语宝」加密通讯，邀请你一起！\n\n输入我的邀请码：' + code + '\n\n双方都能获得积分奖励！\n\n👉 暗语宝 - 把你的话变成只有TA能懂的话';
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(function() { showToast('分享文案已复制', 'success'); });
-  } else {
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('分享文案已复制', 'success');
-  }
 }
 
 // ==================== 启动 ====================
