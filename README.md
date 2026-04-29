@@ -1,44 +1,51 @@
-# 暗语宝 / AnyuBao
+# 暗语宝 AnyuBao
 
-**暗语宝** — 基于确定性置换加密的隐私通讯工具
+> 浏览器加密通讯工具 — 单文件 HTML，开箱即用
 
-> AnyuBao — Deterministic permutation encryption based privacy communication tool
+**🌐 在线访问：** https://longhao142857.github.io/anyubao/
+**📱 微信联系：** longhao142857
 
-## Features / 功能特点
+---
 
-- 🔒 **确定性加密** — 固定密码本映射，同一明文每次加密结果相同
-- 📧 **加密邮件** — 可发送加密/普通邮件，支持好友管理
-- 🛠️ **独立工具** — 免费加密/解密工具，不消耗积分
-- 👥 **邀请裂变** — 邀请码机制，邀请人/被邀请人均获积分奖励
-- 🌙 **暗色主题** — 一键切换明暗模式
-- 📱 **移动优先** — 响应式设计，完美适配手机浏览器
+## 特性
 
-## How to Use / 使用方法
+- 🔒 **强加密通讯** — CJK 汉字表置换密码，20992 汉字 + 95 ASCII
+- 📮 **加密邮件** — 发送给好友，内容全程加密
+- 🛠️ **免费加解密工具** — 无需注册即可使用
+- 👥 **好友系统** — 添加朋友，一对一加密聊天
+- 🎁 **邀请奖励** — 邀请好友注册，双方各得 200 积分
+- 📱 **单文件应用** — 无服务器依赖，浏览器即可运行
 
-1. 打开 暗语宝.html 文件（在浏览器中直接打开）
-2. 注册账号（注册赠送 500 积分）
-3. 发送加密邮件 / 使用加密工具
+## 快速开始
 
-> **加密原理**：基于 Fisher-Yates 洗牌 + 固定种子生成字符映射表，对汉字和 ASCII 字符进行确定性替换。
-> **Encryption**: Uses Fisher-Yates shuffle with fixed seed to generate character mapping table, performs deterministic substitution on CJK and ASCII characters.
+1. 打开 👆 在线地址
+2. 注册账号（送 500 积分）
+3. 开始加密通讯！
 
-## Points System / 积分系统
+## 技术栈
 
-| 操作 | 消耗积分 |
-|------|---------|
-| 注册赠送 | +500 |
-| 发送加密邮件 | -30 |
-| 阅读解密邮件 | -30 |
-| 加密工具（工具页） | 免费 |
-| 解密工具（工具页） | 免费 |
+- 纯前端 HTML/CSS/JavaScript，无框架依赖
+- localStorage 本地存储，数据自主可控
+- Fisher-Yates 洗牌算法 + 固定种子（20260428）
+- MIT 开源协议
 
-## Tech Stack / 技术栈
+## 编码原理
 
-- 单文件 HTML + CSS + JavaScript（零依赖）
-- localStorage 数据持久化
-- Fisher-Yates 洗牌算法
-- CJK 基本区 20992 汉字 + 95 ASCII = 21087 字符
+`
+原文 + 编码表（20992汉字随机置换）→ 密文
+密文 + 同一编码表 → 原文
+`
 
-## License / 许可证
+## 积分规则
 
-MIT License — 详见 [LICENSE](LICENSE) 文件
+| 操作 | 消耗 |
+|------|------|
+| 注册 | +500 积分 |
+| 加密发送邮件 | 30 积分 |
+| 解密阅读邮件 | 30 积分 |
+| 使用加解密工具 | 免费 |
+| 邀请好友注册 | +200 积分 |
+
+---
+
+MIT License | by longhao142857
