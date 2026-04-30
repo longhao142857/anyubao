@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#6366f1">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="msapplication-TileColor" content="#6366f1">
+<meta name="apple-touch-icon" content="icon-192.png">
+<title>暗语宝邮箱</title>
+<style>
+:root {
+  --primary:#6366f1; --primary-dark:#4f46e5; --primary-light:#818cf8;
+  --bg:#f1f5f9; --surface:#ffffff; --surface-light:#e2e8f0;
+  --text:#1e293b; --text-secondary:#64748b; --text-muted:#94a3b8;
+  --success:#10b981; --error:#ef4444; --warning:#f59e0b; --gold:#fbbf24;
+  --border:#e2e8f0; --shadow:0 2px 12px rgba(99,102,241,0.15);
+  --shadow-lg:0 8px 30px rgba(99,102,241,0.2);
+  --radius:16px; --radius-sm:8px; --radius-lg:20px;
+}
+[data-theme="dark"] {
+  --primary:#818cf8; --primary-dark:#6366f1; --primary-light:#a5b4fc;
+  --bg:#0f172a; --surface:#1e293b; --surface-light:#334155;
+  --text:#f1f5f9; --text-secondary:#94a3b8; --text-muted:#64748b;
+  --border:#475569; --shadow:0 2px 12px rgba(0,0,0,0.3);
+  --shadow-lg:0 8px 30px rgba(0,0,0,0.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:none;overflow:hidden}
+.screen.active{display:flex;flex-direction:column}
+
+/* ===== 启动页 ===== */
+.splash{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 50%,#1e1b4b 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.6s}
+.splash.hide{opacity:0;pointer-events:none}
+.splash-logo{width:120px;height:120px;background:rgba(255,255,255,0.15);border-radius:28px;display:flex;align-items:center;justify-content:center;font-size:56px;margin-bottom:24px;animation:pulse 2s infinite;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2)}
+.splash h1{color:#fff;font-size:32px;font-weight:800;letter-spacing:2px;text-shadow:0 2px 20px rgba(0,0,0,0.3)}
+.splash p{color:rgba(255,255,255,0.85);font-size:14px;margin-top:12px;letter-spacing:1px}
+.splash-version{position:absolute;bottom:40px;color:rgba(255,255,255,0.6);font-size:12px}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* ===== 登录页 ===== */
+.login-screen{background:linear-gradient(180deg,var(--primary) 0%,var(--primary-dark) 40%,var(--bg) 40%)}
+.login-header{padding:40px 24px 20px;text-align:center}
+.login-header h1{color:#fff;font-size:28px;font-weight:700}
+.login-header p{color:rgba(255,255,255,0.8);font-size:14px;margin-top:8px}
+.login-card{margin:0 16px 20px;background:var(--surface);border-radius:var(--radius-lg);padding:28px 24px;box-shadow:var(--shadow-lg);flex:1;max-height:calc(100% - 140px);overflow-y:auto}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .icon{width:72px;height:72px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;box-shadow:0 4px 15px rgba(99,102,241,0.4)}
+.login-logo h2{font-size:20px;font-weight:700;color:var(--text)}
+.login-logo p{font-size:13px;color:var(--text-secondary);margin-top:4px}
+.tab-switch{display:flex;background:var(--surface-light);border-radius:12px;padding:4px;margin-bottom:20px}
+.tab-btn{flex:1;padding:12px;border:none;background:none;border-radius:10px;font-size:14px;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all 0.2s}
+.tab-btn.active{background:var(--surface);color:var(--primary);box-shadow:0 2px 8px rgba(99,102,241,0.15)}
+.input-group{margin-bottom:16px}
+.input-group label{display:block;font-size:13px;color:var(--text-secondary);margin-bottom:6px;font-weight:500}
+.input-field{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:12px;font-size:15px;background:var(--surface-light);color:var(--text);transition:all 0.2s}
+.input-field:focus{outline:none;border-color:var(--primary);background:var(--surface)}
+.input-field::placeholder{color:var(--text-muted)}
+.btn{width:100%;padding:14px 20px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 15px rgba(99,102,241,0.4)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-secondary{background:var(--surface-light);color:var(--text);border:2px solid var(--border)}
+.btn-success{background:linear-gradient(135deg,var(--success),#059669);color:#fff}
+.btn-error{background:linear-gradient(135deg,var(--error),#dc2626);color:#fff}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#1e293b}
+.login-footer{text-align:center;padding:16px;font-size:12px;color:var(--text-muted)}
+.login-footer a{color:var(--primary);text-decoration:none}
+
+/* ===== 主应用 ===== */
+.app-header{height:56px;background:var(--surface);display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);flex-shrink:0;z-index:100}
+.app-header .brand{display:flex;align-items:center;gap:10px}
+.app-header .brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
+.app-header .brand-text{font-size:18px;font-weight:700;color:var(--text)}
+.app-header .user-info{display:flex;align-items:center;gap:12px}
+.points-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;background:linear-gradient(135deg,var(--gold),#f59e0b);border-radius:20px;color:#1e293b;font-size:13px;font-weight:700}
+.points-badge::before{content:"💰";font-size:14px}
+.header-actions{display:flex;gap:8px}
+.header-btn{width:36px;height:36px;border:none;border-radius:10px;background:var(--surface-light);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all 0.2s}
+.header-btn:hover{background:var(--border)}
+
+.app-content{flex:1;overflow-y:auto;padding:16px;padding-bottom:100px;-webkit-overflow-scrolling:touch}
+
+/* ===== 底部导航 ===== */
+.nav-bar{position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--surface);display:flex;justify-content:space-around;align-items:center;box-shadow:0 -2px 10px rgba(0,0,0,0.05);padding-bottom:env(safe-area-inset-bottom);z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;cursor:pointer;transition:all 0.2s;border:none;background:none}
+.nav-item .icon{font-size:22px;transition:transform 0.2s}
+.nav-item .label{font-size:11px;color:var(--text-muted);font-weight:500}
+.nav-item.active .icon{transform:translateY(-2px)}
+.nav-item.active .label{color:var(--primary);font-weight:600}
+.nav-item.active .icon{color:var(--primary)}
+
+/* ===== 卡片组件 ===== */
+.card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-title .icon{font-size:20px}
+
+/* ===== 写邮件 ===== */
+.compose-form .input-group{margin-bottom:14px}
+.compose-form .input-group label{font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;font-weight:500}
+.compose-form .input-field{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;font-size:15px;background:var(--surface-light);transition:all 0.2s}
+.compose-form .input-field:focus{outline:none;border-color:var(--primary);background:var(--surface)}
+.compose-form textarea.input-field{min-height:120px;resize:vertical;font-family:inherit;line-height:1.6}
+.compose-actions{display:flex;gap:10px;margin-top:16px}
+.compose-actions .btn{flex:1}
+.encrypt-toggle{display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-light);border-radius:12px;margin-bottom:16px;cursor:pointer;transition:all 0.2s}
+.encrypt-toggle:hover{background:var(--border)}
+.encrypt-toggle input[type="checkbox"]{width:20px;height:20px;accent-color:var(--primary)}
+.encrypt-toggle .info{flex:1}
+.encrypt-toggle .info .title{font-size:14px;font-weight:600;color:var(--text)}
+.encrypt-toggle .info .desc{font-size:12px;color:var(--text-secondary)}
+.encrypt-toggle .cost{padding:4px 10px;background:var(--gold);color:#1e293b;border-radius:12px;font-size:12px;font-weight:600}
+
+/* ===== 收件箱 ===== */
+.mail-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.mail-list-header h3{font-size:18px;font-weight:700}
+.mail-count{font-size:13px;color:var(--text-secondary);background:var(--surface-light);padding:4px 10px;border-radius:12px}
+.mail-empty{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.mail-empty .icon{font-size:64px;margin-bottom:16px;opacity:0.5}
+.mail-empty p{font-size:14px}
+.mail-item{background:var(--surface);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.2s;box-shadow:var(--shadow)}
+.mail-item:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.mail-item.unread{border-left:4px solid var(--primary)}
+.mail-item.read{border-left:4px solid transparent}
+.mail-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--primary-light),var(--primary));display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0}
+.mail-info{flex:1;min-width:0}
+.mail-from{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-subject{font-size:13px;color:var(--text-secondary);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.mail-time{font-size:12px;color:var(--text-muted)}
+.mail-encrypted{padding:3px 8px;background:var(--primary);color:#fff;border-radius:10px;font-size:11px;font-weight:600}
+
+/* ===== 邮件详情 ===== */
+.mail-detail{background:var(--surface);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.mail-detail-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.mail-detail-avatar{width:48px;height:48px}
+.mail-detail-info{flex:1}
+.mail-detail-from{font-size:16px;font-weight:700}
+.mail-detail-time{font-size:12px;color:var(--text-muted);margin-top:2px}
+.mail-detail-subject{font-size:18px;font-weight:700;margin-bottom:16px;padding:12px;background:var(--surface-light);border-radius:12px}
+.mail-detail-content{min-height:100px;line-height:1.8;font-size:15px;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.mail-encrypted-box{background:linear-gradient(135deg,var(--surface-light),var(--bg));border:2px dashed var(--primary);border-radius:12px;padding:24px;text-align:center}
+.mail-encrypted-box .icon{font-size:48px;margin-bottom:12px}
+.mail-encrypted-box .title{font-size:16px;font-weight:700;color:var(--primary);margin-bottom:8px}
+.mail-encrypted-box .desc{font-size:13px;color:var(--text-secondary);margin-bottom:16px}
+.mail-decrypted-box{background:var(--surface-light);border-radius:12px;padding:16px;margin-top:16px;border-left:4px solid var(--success)}
+.mail-decrypted-box .label{font-size:12px;color:var(--success);font-weight:600;margin-bottom:8px}
+.mail-decrypted-box .content{font-size:15px;line-height:1.8;white-space:pre-wrap}
+
+/* ===== 好友系统 ===== */
+.friend-input-group{display:flex;gap:10px;margin-bottom:16px}
+.friend-input-group .input-field{flex:1}
+.friend-item{background:var(--surface);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow)}
+.friend-info{display:flex;align-items:center;gap:12px}
+.friend-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--success),#059669);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff}
+.friend-name{font-size:15px;font-weight:600}
+.friend-actions{display:flex;gap:8px}
+.friend-btn{padding:8px 14px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.friend-btn-add{background:var(--success);color:#fff}
+.friend-btn-del{background:var(--error);color:#fff}
+
+/* ===== 个人中心 ===== */
+.profile-header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:var(--radius);padding:24px;margin-bottom:16px;color:#fff;text-align:center}
+.profile-avatar{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.2);border:4px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 16px}
+.profile-name{font-size:20px;font-weight:700;margin-bottom:4px}
+.profile-id{font-size:13px;opacity:0.8}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)}
+.stat-value{font-size:24px;font-weight:800;color:var(--primary)}
+.stat-label{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.menu-list{background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.menu-item{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border);cursor:pointer;transition:all 0.2s}
+.menu-item:last-child{border-bottom:none}
+.menu-item:hover{background:var(--surface-light)}
+.menu-item-left{display:flex;align-items:center;gap:12px}
+.menu-item-icon{width:36px;height:36px;border-radius:10px;background:var(--surface-light);display:flex;align-items:center;justify-content:center;font-size:18px}
+.menu-item-text{font-size:15px;font-weight:500}
+.menu-item-arrow{color:var(--text-muted);font-size:18px}
+
+/* ===== 充值 ===== */
+.recharge-amounts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+.recharge-item{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s}
+.recharge-item:hover{border-color:var(--primary-light)}
+.recharge-item.selected{border-color:var(--primary);background:var(--surface-light)}
+.recharge-item .amount{font-size:24px;font-weight:800;color:var(--text)}
+.recharge-item .points{font-size:13px;color:var(--text-secondary);margin-top:4px}
+.recharge-custom{margin-bottom:16px}
+.recharge-custom label{display:block;font-size:13px;color:var(--text-secondary);margin-bottom:8px}
+.recharge-custom .input-field{text-align:center;font-size:18px;font-weight:700}
+.recharge-info{background:var(--surface-light);border-radius:12px;padding:16px;margin-bottom:16px}
+.recharge-info .row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px}
+.recharge-info .row:last-child{margin-bottom:0;padding-top:8px;border-top:1px solid var(--border);font-weight:700}
+
+/* ===== 管理员 ===== */
+.admin-header{background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:var(--radius);padding:20px;margin-bottom:16px;color:#fff}
+.admin-header h2{font-size:20px;font-weight:700;margin-bottom:4px}
+.admin-header p{font-size:13px;opacity:0.8}
+.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.admin-stat-card{background:var(--surface);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)}
+.admin-stat-value{font-size:28px;font-weight:800;color:var(--primary)}
+.admin-stat-label{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.admin-nav{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.admin-nav-item{padding:10px 16px;border:none;border-radius:10px;background:var(--surface-light);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s}
+.admin-nav-item.active{background:var(--primary);color:#fff}
+.admin-view{display:none}
+.admin-view.active{display:block}
+
+/* ===== 模态框 ===== */
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px;backdrop-filter:blur(4px)}
+.modal.show{display:flex}
+.modal-content{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:360px;max-height:80vh;overflow:hidden;animation:modalIn 0.3s}
+@keyframes modalIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+.modal-header{padding:20px 20px 0}
+.modal-header h3{font-size:18px;font-weight:700}
+.modal-body{padding:20px;overflow-y:auto;max-height:50vh}
+.modal-footer{padding:0 20px 20px;display:flex;gap:10px}
+.modal-footer .btn{flex:1}
+
+/* ===== Toast ===== */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);background:rgba(0,0,0,0.85);color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;z-index:2000;opacity:0;transition:all 0.3s;backdrop-filter:blur(10px)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 工具类 ===== */
+.text-center{text-align:center}
+.text-primary{color:var(--primary)}
+.text-success{color:var(--success)}
+.text-error{color:var(--error)}
+.text-warning{color:var(--warning)}
+.mb-8{margin-bottom:8px}
+.mb-12{margin-bottom:12px}
+.mb-16{margin-bottom:16px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ===== 启动页 ===== -->
+<div class="splash" id="splash">
+  <div class="splash-logo">🔐</div>
+  <h1>暗语宝</h1>
+  <p>安全加密邮箱系统</p>
+  <div class="splash-version">V3.0 完整版 · 27231字符编码表</div>
+</div>
+
+<!-- ===== 登录/注册页 ===== -->
+<div class="screen login-screen" id="loginScreen">
+  <div class="login-header">
+    <h1>暗语宝邮箱</h1>
+    <p>安全、私密的加密通信</p>
+  </div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">🔐</div>
+      <h2>欢迎使用</h2>
+      <p>注册即送500积分</p>
+    </div>
+    <div class="tab-switch">
+      <button class="tab-btn active" onclick="switchLoginTab('login')">登录</button>
+      <button class="tab-btn" onclick="switchLoginTab('register')">注册</button>
+    </div>
+    <div id="loginForm">
+      <div class="input-group">
+        <label>用户名</label>
+        <input type="text" class="input-field" id="loginUser" placeholder="请输入用户名">
+      </div>
+      <div class="input-group">
+        <label>密码</label>
+        <input type="password" class="input-field" id="loginPass" placeholder="请输入密码">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">🔓 登录</button>
+    </div>
+    <div id="registerForm" class="hidden">
+      <div class="input-group">
+        <label>用户名</label>
+        <input type="text" class="input-field" id="regUser" placeholder="设置用户名（2-20位）">
+      </div>
+      <div class="input-group">
+        <label>密码</label>
+        <input type="password" class="input-field" id="regPass" placeholder="设置密码（6位以上）">
+      </div>
+      <div class="input-group">
+        <label>确认密码</label>
+        <input type="password" class="input-field" id="regPass2" placeholder="再次输入密码">
+      </div>
+      <button class="btn btn-success" onclick="doRegister()">🎉 立即注册</button>
+    </div>
+    <div style="margin-top:20px;text-align:center">
+      <button class="btn btn-secondary" onclick="showAdminLogin()">⚙️ 管理员入口</button>
+    </div>
+  </div>
+  <div class="login-footer">
+    <p>🔒 端到端加密 · 隐私保护 · 本地存储</p>
+  </div>
+</div>
+
+<!-- ===== 主应用 ===== -->
+<div class="screen" id="mainApp">
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">🔐</div>
+      <span class="brand-text">暗语宝</span>
+    </div>
+    <div class="user-info">
+      <div class="points-badge" id="headerPoints">0</div>
+      <div class="header-actions">
+        <button class="header-btn" onclick="toggleTheme()" title="切换主题">🌓</button>
+        <button class="header-btn" onclick="confirmLogout()" title="退出">🚪</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-content" id="appContent">
+    <!-- 动态内容 -->
+  </main>
+
+  <nav class="nav-bar">
+    <button class="nav-item active" onclick="switchMainTab('compose')">
+      <span class="icon">✉️</span>
+      <span class="label">写邮件</span>
+    </button>
+    <button class="nav-item" onclick="switchMainTab('inbox')">
+      <span class="icon">📥</span>
+      <span class="label">收件箱</span>
+    </button>
+    <button class="nav-item" onclick="switchMainTab('friends')">
+      <span class="icon">👥</span>
+      <span class="label">好友</span>
+    </button>
+    <button class="nav-item" onclick="switchMainTab('tools')">
+      <span class="icon">🔧</span>
+      <span class="label">工具</span>
+    </button>
+    <button class="nav-item" onclick="switchMainTab('profile')">
+      <span class="icon">👤</span>
+      <span class="label">我的</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ===== 管理员登录 ===== -->
+<div class="screen login-screen" id="adminLoginScreen">
+  <div class="login-header">
+    <h1>管理员登录</h1>
+    <p>系统管理后台</p>
+  </div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="icon">⚙️</div>
+      <h2>管理员验证</h2>
+    </div>
+    <div class="input-group">
+      <label>管理员账号</label>
+      <input type="text" class="input-field" id="adminUsername" placeholder="admin">
+    </div>
+    <div class="input-group">
+      <label>密码</label>
+      <input type="password" class="input-field" id="adminPassword" placeholder="请输入密码">
+    </div>
+    <button class="btn btn-primary" onclick="doAdminLogin()">🔓 登录</button>
+    <button class="btn btn-secondary" onclick="showLogin()" style="margin-top:10px">← 返回用户登录</button>
+  </div>
+</div>
+
+<!-- ===== 管理员面板 ===== -->
+<div class="screen" id="adminPanel">
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">⚙️</div>
+      <span class="brand-text">管理后台</span>
+    </div>
+    <div class="header-actions">
+      <button class="header-btn" onclick="showAdminChangePassModal()">🔑</button>
+      <button class="header-btn" onclick="adminLogout()">🚪</button>
+    </div>
+  </header>
+  <main class="app-content">
+    <div class="admin-header">
+      <h2>📊 系统概览</h2>
+      <p>实时监控与数据管理</p>
+    </div>
+    <div class="admin-stats">
+      <div class="admin-stat-card">
+        <div class="admin-stat-value" id="adminUserCount">0</div>
+        <div class="admin-stat-label">注册用户</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-value" id="adminMailCount">0</div>
+        <div class="admin-stat-label">邮件总数</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-value" id="adminPendingCount">0</div>
+        <div class="admin-stat-label">待审充值</div>
+      </div>
+    </div>
+    <div class="admin-nav">
+      <button class="admin-nav-item active" onclick="adminSwitchTab('dash')">📊 概览</button>
+      <button class="admin-nav-item" onclick="adminSwitchTab('users')">👥 用户</button>
+      <button class="admin-nav-item" onclick="adminSwitchTab('mails')">📧 邮件</button>
+      <button class="admin-nav-item" onclick="adminSwitchTab('recharge')">💰 充值</button>
+    </div>
+    <div id="adminDashView" class="admin-view active">
+      <div class="card">
+        <div class="card-title">📈 数据统计</div>
+        <div id="adminDashContent">加载中...</div>
+      </div>
+    </div>
+    <div id="adminUsersView" class="admin-view">
+      <div class="card">
+        <div class="card-title">👥 用户列表</div>
+        <div id="adminUserList">加载中...</div>
+      </div>
+    </div>
+    <div id="adminMailsView" class="admin-view">
+      <div class="card">
+        <div class="card-title">📧 邮件列表</div>
+        <div id="adminMailList">加载中...</div>
+      </div>
+    </div>
+    <div id="adminRechargeView" class="admin-view">
+      <div class="card">
+        <div class="card-title">💰 充值申请</div>
+        <div id="adminRechargeList">加载中...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== 退出确认模态框 ===== -->
+<div class="modal" id="logoutModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>确认退出</h3>
+    </div>
+    <div class="modal-body">
+      <p>确定要退出登录吗？</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('logoutModal')">取消</button>
+      <button class="btn btn-error" onclick="doLogout()">确认退出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 重置数据确认弹窗 ===== -->
+<div class="modal" id="resetDataModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>⚠️ 确认重置数据</h3>
+    </div>
+    <div class="modal-body">
+      <p style="text-align:center;padding:8px 0">确定要重置所有数据吗？</p>
+      <p style="text-align:center;font-size:13px;color:var(--error)">所有用户、邮件、充值记录将被清空！<br>此操作不可恢复！</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('resetDataModal')">取消</button>
+      <button class="btn btn-error" onclick="doResetData()">确认重置</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 删除用户确认弹窗 ===== -->
+<div class="modal" id="deleteUserModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>⚠️ 确认删除用户</h3>
+    </div>
+    <div class="modal-body">
+      <p style="text-align:center;padding:8px 0">确定要删除用户 <b id="deleteUserName"></b> 吗？</p>
+      <p style="text-align:center;font-size:13px;color:var(--error)">该用户的所有邮件和充值记录将一并删除！<br>此操作不可恢复！</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('deleteUserModal')">取消</button>
+      <button class="btn btn-error" onclick="doDeleteUser()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 管理员修改密码弹窗 ===== -->
+<div class="modal" id="adminChangePassModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>🔑 修改管理员密码</h3>
+    </div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label>当前密码</label>
+        <input type="password" class="input-field" id="adminOldPass" placeholder="请输入当前密码">
+      </div>
+      <div class="input-group">
+        <label>新密码</label>
+        <input type="password" class="input-field" id="adminNewPass" placeholder="请输入新密码（6位以上）">
+      </div>
+      <div class="input-group">
+        <label>确认新密码</label>
+        <input type="password" class="input-field" id="adminConfirmPass" placeholder="请再次输入新密码">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hideModal('adminChangePassModal')">取消</button>
+      <button class="btn btn-primary" onclick="doAdminChangePass()">确认修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== 配置常量 ====================
+const USERS_KEY = 'anyu_users_v2';
+const EMAILS_KEY = 'anyu_emails_v2';
+const ADMIN_KEY = 'anyu_admin_v2';
+const SESSION_KEY = 'anyu_session_v2';
+const POINTS_REGISTER = 500;
+const POINTS_PER_MAIL_ENCRYPT = 30;
+const POINTS_PER_DECRYPT = 30;
+const ADMIN_DEFAULT_USER = 'admin';
+const ADMIN_DEFAULT_PASS = 'admin888';
+
+// ==================== Gist 数据同步 ====================
+const GIST_ID = 'YOUR_GIST_ID_HERE';
+const GIST_RAW_URL = 'https://gist.githubusercontent.com/longhao142857/YOUR_GIST_ID_HERE/raw/anyubao_data.json';
+
+var syncEnabled = true;
+var syncPending = false;
+
+function syncToGist() {
+  return new Promise(function(resolve, reject) {
+    if (!syncEnabled) { resolve(); return; }
+    var data = {
+      version: 1,
+      updated: new Date().toISOString(),
+      users: JSON.parse(localStorage.getItem(USERS_KEY) || '{}'),
+      mails: JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]')
+    };
+    var content = JSON.stringify(data);
+    fetch('https://api.github.com/gists/' + GIST_ID, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'Bearer YOUR_TOKEN_HERE',
+        'X-GitHub-Api-Version': '2022-11-28'
+      },
+      body: JSON.stringify({
+        description: '暗语宝加密通讯数据存储 - 请勿删除',
+        files: { 'anyubao_data.json': { content: content } }
+      })
+    }).then(function(r) { 
+      if (r.ok) { showToast('已同步到云端', 'success'); resolve(); }
+      else { reject(new Error('GitHub API 返回 ' + r.status)); }
+    }).catch(function(err) { reject(err); });
+  });
+}
+
+function loadFromGist(callback) {
+  fetch(GIST_RAW_URL + '?t=' + Date.now(), {cache: 'no-store'})
+    .then(function(r) { return r.json(); })
+    .then(function(cloud) {
+      var localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+      var localMails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+      var cloudUsers = cloud.users || {};
+      var cloudMails = cloud.mails || [];
+      
+      // 合并：取两边的并集（注册用户），以cloud为准去重
+      var mergedUsers = {};
+      Object.keys(localUsers).forEach(function(u) { mergedUsers[u] = localUsers[u]; });
+      Object.keys(cloudUsers).forEach(function(u) { 
+        if (!mergedUsers[u] || (cloudUsers[u].regTime && mergedUsers[u].regTime && cloudUsers[u].regTime > mergedUsers[u].regTime)) {
+          mergedUsers[u] = cloudUsers[u];
+        }
+      });
+      localStorage.setItem(USERS_KEY, JSON.stringify(mergedUsers));
+      
+      // 邮件合并去重
+      var allMails = localMails.concat(cloudMails);
+      var seen = {};
+      var deduped = allMails.filter(function(m) {
+        if (seen[m.id]) return false;
+        seen[m.id] = true;
+        return true;
+      });
+      localStorage.setItem(EMAILS_KEY, JSON.stringify(deduped));
+      
+      if (callback) callback();
+    })
+    .catch(function() {
+      if (callback) callback();
+    });
+}
+
+function GIST_URL() { return GIST_RAW_URL; }
+
+// ==================== 编码表生成 ====================
+// 完整CJK基本区 + ASCII可打印字符 = 21087字符
+var CT = {}; // 字符→编码
+var DT = {}; // 编码→字符
+
+function initCryptoTable() {
+  var H = '';
+  // ASCII可打印字符 (32-126)
+  for (var i = 32; i <= 126; i++) H += String.fromCharCode(i);
+  // CJK统一表意文字基本区 (U+4E00 - U+9FFF = 20992字)
+  for (var i = 0; i < 20992; i++) H += String.fromCharCode(0x4E00 + i);
+  // CJK扩展A区 (U+3400 - U+4DBF = 6144字)
+  for (var i = 0; i < 6144; i++) H += String.fromCharCode(0x3400 + i);
+  
+  var indices = [];
+  for (var i = 0; i < H.length; i++) indices.push(i);
+  
+  // Fisher-Yates洗牌，固定种子
+  var seed = 20260428;
+  function seededRandom() {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  }
+  for (var i = indices.length - 1; i > 0; i--) {
+    var j = Math.floor(seededRandom() * (i + 1));
+    var t = indices[i]; indices[i] = indices[j]; indices[j] = t;
+  }
+  
+  CT = {}; DT = {};
+  for (var i = 0; i < H.length; i++) {
+    var code = 1000 + indices[i];
+    CT[H.charAt(i)] = code;
+    DT[code] = H.charAt(i);
+  }
+}
+
+// ==================== 初始化 ====================
+function init() {
+  initCryptoTable();
+  initAdmin();
+  
+  // 先尝试从Gist加载云端数据
+  loadFromGist(function() {
+    var session = getSession();
+    if (session && session.user) {
+      showMainApp();
+    } else {
+      showLogin();
+    }
+    
+    // 启动页动画
+    setTimeout(function() {
+      var splash = document.getElementById('splash');
+      if (splash) splash.classList.add('hide');
+    }, 1500);
+  });
+}
+
+function initAdmin() {
+  var admin = localStorage.getItem(ADMIN_KEY);
+  if (!admin) {
+    localStorage.setItem(ADMIN_KEY, JSON.stringify({
+      username: ADMIN_DEFAULT_USER,
+      pass: simpleHash(ADMIN_DEFAULT_PASS)
+    }));
+  }
+}
+
+// ==================== 工具函数 ====================
+function simpleHash(s) {
+  var h = 0;
+  for (var i = 0; i < s.length; i++) {
+    h = ((h << 5) - h) + s.charCodeAt(i);
+    h = h & h;
+  }
+  return h.toString(16);
+}
+
+function showToast(msg, type) {
+  var toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.background = type === 'error' ? 'rgba(239,68,68,0.9)' : 
+                          type === 'success' ? 'rgba(16,185,129,0.9)' : 
+                          'rgba(0,0,0,0.8)';
+  toast.classList.add('show');
+  setTimeout(function() { toast.classList.remove('show'); }, 2500);
+}
+
+function hideModal(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function formatTime(ts) {
+  var d = new Date(ts);
+  var now = new Date();
+  var diff = now - d;
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+  return (d.getMonth() + 1) + '/' + d.getDate();
+}
+
+// ==================== 会话管理 ====================
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || {}; }
+  catch(e) { return {}; }
+}
+
+function setSession(user) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ user: user, time: Date.now() }));
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+function getUserData(user) {
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  return users[user] || null;
+}
+
+function saveUserData(user, data) {
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  users[user] = data;
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  syncToGist();
+}
+
+function getCurrentUser() {
+  var s = getSession();
+  return s.user || null;
+}
+
+// ==================== 页面切换 ====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function showLogin() {
+  clearSession();
+  showScreen('loginScreen');
+}
+
+function showMainApp() {
+  showScreen('mainApp');
+  switchMainTab('compose');
+  updateHeaderPoints();
+}
+
+function showAdminLogin() {
+  showScreen('adminLoginScreen');
+}
+
+function showAdminPanel() {
+  showScreen('adminPanel');
+  adminSwitchTab('dash');
+}
+
+// ==================== 登录/注册 ====================
+function switchLoginTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+}
+
+function doLogin() {
+  var user = document.getElementById('loginUser').value.trim();
+  var pass = document.getElementById('loginPass').value;
+  if (!user || !pass) return showToast('请输入用户名和密码', 'error');
+  
+  var data = getUserData(user);
+  if (!data || data.pass !== simpleHash(pass)) {
+    return showToast('用户名或密码错误', 'error');
+  }
+  
+  setSession(user);
+  syncToGist();
+  showToast('登录成功', 'success');
+  showMainApp();
+}
+
+function doRegister() {
+  var user = document.getElementById('regUser').value.trim();
+  var pass = document.getElementById('regPass').value;
+  var pass2 = document.getElementById('regPass2').value;
+  
+  if (!user || user.length < 2) return showToast('用户名至少2位', 'error');
+  if (!pass || pass.length < 6) return showToast('密码至少6位', 'error');
+  if (pass !== pass2) return showToast('两次密码不一致', 'error');
+  
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  if (users[user]) return showToast('用户名已存在', 'error');
+  
+  users[user] = {
+    pass: simpleHash(pass),
+    points: POINTS_REGISTER,
+    regTime: new Date().toLocaleString(),
+    friends: [],
+    sentCount: 0,
+    receivedCount: 0
+  };
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  
+  syncToGist().then(function() {
+    showToast('注册成功！赠送' + POINTS_REGISTER + '积分', 'success');
+    document.getElementById('loginUser').value = user;
+    document.getElementById('loginPass').value = pass;
+    switchLoginTab('login');
+  }).catch(function(err) {
+    showToast('注册成功，但云端同步失败，请检查网络', 'error');
+    document.getElementById('loginUser').value = user;
+    document.getElementById('loginPass').value = pass;
+    switchLoginTab('login');
+  });
+}
+
+function confirmLogout() {
+  document.getElementById('logoutModal').classList.add('show');
+}
+
+function doLogout() {
+  hideModal('logoutModal');
+  clearSession();
+  showLogin();
+  showToast('已退出登录', 'success');
+}
+
+// ==================== 主题切换 ====================
+function toggleTheme() {
+  var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  localStorage.setItem('anyu_theme', isDark ? 'light' : 'dark');
+}
+
+// 恢复主题
+if (localStorage.getItem('anyu_theme') === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+}
+
+// ==================== 加密工具 ====================
+function renderTools(container) {
+  var html = '<div style="padding:16px">';
+  html += '<div style="display:flex;gap:12px">';
+  
+  // Encrypt card
+  html += '<div class="card" onclick="showToolPage(\'encrypt\')" style="flex:1;text-align:center;padding:24px 16px;cursor:pointer;active:scale(0.97)">';
+  html += '<div style="font-size:40px;margin-bottom:10px">🔒</div>';
+  html += '<div style="font-size:16px;font-weight:700">加密工具</div>';
+  html += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">明文 → 密文</div>';
+  html += '</div>';
+  
+  // Decrypt card
+  html += '<div class="card" onclick="showToolPage(\'decrypt\')" style="flex:1;text-align:center;padding:24px 16px;cursor:pointer;active:scale(0.97)">';
+  html += '<div style="font-size:40px;margin-bottom:10px">🔓</div>';
+  html += '<div style="font-size:16px;font-weight:700">解密工具</div>';
+  html += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">密文 → 明文</div>';
+  html += '</div>';
+  
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function showToolPage(type) {
+  var container = document.getElementById('appContent');
+  var isEnc = type === 'encrypt';
+  var icon = isEnc ? '🔒' : '🔓';
+  var title = isEnc ? '加密工具' : '解密工具';
+  var placeholder = isEnc ? '在此输入明文内容...' : '在此粘贴密文...';
+  var outPlaceholder = isEnc ? '密文将显示在此...' : '明文将显示在此...';
+  var btnText = isEnc ? '🔑 加密' : '🔓 解密';
+  var btnAction = isEnc ? 'toolEncrypt()' : 'toolDecrypt()';
+  
+  var html = '<div style="padding:16px">';
+  html += '<div class="card">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
+  html += '<span style="font-size:20px">' + icon + '</span>';
+  html += '<span style="font-size:18px;font-weight:700">' + title + '</span>';
+  html += '<button class="btn btn-secondary" onclick="renderTools(document.getElementById(\'appContent\'))" style="margin-left:auto;padding:6px 12px;font-size:13px">← 返回</button>';
+  html += '</div>';
+  
+  if (isEnc) {
+    html += '<textarea id="toolEncInput" placeholder="' + placeholder + '" style="width:100%;height:150px;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:15px;resize:vertical;background:var(--surface-light);color:var(--text-primary)"></textarea>';
+    html += '<div style="display:flex;gap:10px;margin-top:12px">';
+    html += '<button class="btn btn-primary" onclick="toolEncrypt()" style="flex:1">🔑 加密</button>';
+    html += '<button class="btn btn-secondary" onclick="toolCopyEnc()" style="flex:1">📋 复制</button>';
+    html += '<button class="btn btn-secondary" onclick="toolClearEnc()" style="flex:1">🗑️ 清空</button>';
+    html += '</div>';
+    html += '<textarea id="toolEncOutput" placeholder="' + outPlaceholder + '" readonly style="width:100%;height:150px;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:15px;resize:vertical;margin-top:12px;background:var(--surface-light);color:var(--text-primary)"></textarea>';
+  } else {
+    html += '<textarea id="toolDecInput" placeholder="' + placeholder + '" style="width:100%;height:150px;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:15px;resize:vertical;background:var(--surface-light);color:var(--text-primary)"></textarea>';
+    html += '<div style="display:flex;gap:10px;margin-top:12px">';
+    html += '<button class="btn btn-primary" onclick="toolDecrypt()" style="flex:1">🔓 解密</button>';
+    html += '<button class="btn btn-secondary" onclick="toolClearDec()" style="flex:1">🗑️ 清空</button>';
+    html += '</div>';
+    html += '<textarea id="toolDecOutput" placeholder="' + outPlaceholder + '" readonly style="width:100%;height:150px;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:15px;resize:vertical;margin-top:12px;background:var(--surface-light);color:var(--text-primary)"></textarea>';
+  }
+  
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function toolEncrypt() {
+  var input = document.getElementById('toolEncInput').value;
+  if (!input) return showToast('请输入明文内容', 'error');
+  var arr = [];
+  for (var i = 0; i < input.length; i++) {
+    var c = input.charAt(i);
+    if (CT[c]) arr.push(CT[c]);
+    else arr.push('<U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0') + '>');
+  }
+  document.getElementById('toolEncOutput').value = arr.join('_');
+  showToast('加密完成', 'success');
+}
+
+function toolCopyEnc() {
+  var output = document.getElementById('toolEncOutput').value;
+  if (!output) return showToast('没有可复制的内容', 'error');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(output).then(function() { showToast('已复制到剪贴板', 'success'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = output;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('已复制到剪贴板', 'success');
+  }
+}
+
+function toolClearEnc() {
+  document.getElementById('toolEncInput').value = '';
+  document.getElementById('toolEncOutput').value = '';
+}
+
+function toolDecrypt() {
+  var input = document.getElementById('toolDecInput').value.trim();
+  if (!input) return showToast('请粘贴密文', 'error');
+  var parts = input.split('_');
+  var result = '';
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i];
+    if (p.charAt(0) === '<' && p.indexOf('<U+') === 0) {
+      var match = p.match(/^<U\+([0-9A-Fa-f]+)>$/);
+      if (match) {
+        result += String.fromCodePoint(parseInt(match[1], 16));
+        continue;
+      }
+    }
+    var n = parseInt(p, 10);
+    if (!isNaN(n) && DT[n]) result += DT[n];
+  }
+  document.getElementById('toolDecOutput').value = result;
+  showToast('解密完成', 'success');
+}
+
+function toolClearDec() {
+  document.getElementById('toolDecInput').value = '';
+  document.getElementById('toolDecOutput').value = '';
+}
+
+// ==================== 主标签切换 ====================
+var currentTab = 'compose';
+function switchMainTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var index = ['compose', 'inbox', 'friends', 'tools', 'profile'].indexOf(tab);
+  if (index >= 0) document.querySelectorAll('.nav-item')[index].classList.add('active');
+  
+  var content = document.getElementById('appContent');
+  switch(tab) {
+    case 'compose': renderCompose(content); break;
+    case 'inbox': renderInbox(content); break;
+    case 'friends': renderFriends(content); break;
+    case 'tools': renderTools(content); break;
+    case 'profile': renderProfile(content); break;
+  }
+}
+
+function updateHeaderPoints() {
+  var user = getCurrentUser();
+  if (!user) return;
+  var data = getUserData(user);
+  document.getElementById('headerPoints').textContent = (data ? data.points : 0) + ' 积分';
+}
+
+// ==================== 写邮件 ====================
+var encryptEnabled = false;
+function renderCompose(container) {
+  var user = getCurrentUser();
+  var data = getUserData(user);
+  var friends = data ? (data.friends || []) : [];
+  
+  var html = '<div class="card"><div class="card-title">✉️ 写邮件</div>';
+  html += '<div class="compose-form">';
+  html += '<div class="input-group"><label>收件人</label>';
+  html += '<input type="text" class="input-field" id="composeTo" placeholder="输入用户名或从好友选择" list="friendList">';
+  html += '<datalist id="friendList">';
+  friends.forEach(function(f) { html += '<option value="' + f + '">'; });
+  html += '</datalist></div>';
+  html += '<div class="input-group"><label>主题</label>';
+  html += '<input type="text" class="input-field" id="composeSubject" placeholder="邮件主题"></div>';
+  html += '<div class="input-group"><label>内容</label>';
+  html += '<textarea class="input-field" id="composeBody" placeholder="请输入邮件内容..."></textarea></div>';
+  html += '<div class="encrypt-toggle" onclick="toggleEncrypt()">';
+  html += '<input type="checkbox" id="encryptCheck" ' + (encryptEnabled ? 'checked' : '') + ' onclick="event.stopPropagation()">';
+  html += '<div class="info"><div class="title">🔒 启用加密</div><div class="desc">使用暗语宝加密算法保护内容</div></div>';
+  html += '<div class="cost">-' + POINTS_PER_MAIL_ENCRYPT + '积分</div></div>';
+  html += '<div class="compose-actions">';
+  html += '<button class="btn btn-primary" onclick="sendMail()">🚀 发送</button>';
+  html += '<button class="btn btn-secondary" onclick="clearCompose()">🗑️ 清空</button>';
+  html += '</div></div></div>';
+  
+  container.innerHTML = html;
+}
+
+function toggleEncrypt() {
+  encryptEnabled = !encryptEnabled;
+  document.getElementById('encryptCheck').checked = encryptEnabled;
+}
+
+function clearCompose() {
+  document.getElementById('composeTo').value = '';
+  document.getElementById('composeSubject').value = '';
+  document.getElementById('composeBody').value = '';
+  encryptEnabled = false;
+  document.getElementById('encryptCheck').checked = false;
+}
+
+function sendMail() {
+  var to = document.getElementById('composeTo').value.trim();
+  var subject = document.getElementById('composeSubject').value.trim();
+  var body = document.getElementById('composeBody').value;
+  var user = getCurrentUser();
+  
+  if (!to) return showToast('请输入收件人', 'error');
+  if (!body) return showToast('请输入邮件内容', 'error');
+  
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  if (!users[to]) return showToast('收件人不存在', 'error');
+  
+  var senderData = getUserData(user);
+  if (encryptEnabled && senderData.points < POINTS_PER_MAIL_ENCRYPT) {
+    return showToast('积分不足，加密发送需' + POINTS_PER_MAIL_ENCRYPT + '积分', 'error');
+  }
+  
+  // 加密内容
+  var finalBody = body;
+  if (encryptEnabled) {
+    var arr = [];
+    for (var i = 0; i < body.length; i++) {
+      var c = body.charAt(i);
+      if (CT[c]) arr.push(CT[c]);
+      else arr.push('<U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0') + '>');
+    }
+    finalBody = arr.join('_');
+  }
+  
+  // 保存邮件
+  var mails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+  mails.push({
+    id: Date.now() + Math.random(),
+    from: user,
+    to: to,
+    subject: subject || '(无主题)',
+    body: finalBody,
+    encrypted: encryptEnabled,
+    read: false,
+    time: Date.now()
+  });
+  localStorage.setItem(EMAILS_KEY, JSON.stringify(mails));
+  
+  syncToGist().then(function() {
+    if (encryptEnabled) {
+      senderData.points -= POINTS_PER_MAIL_ENCRYPT;
+      senderData.sentCount = (senderData.sentCount || 0) + 1;
+      saveUserData(user, senderData);
+      showToast('加密发送成功（-' + POINTS_PER_MAIL_ENCRYPT + '积分）', 'success');
+    } else {
+      showToast('发送成功', 'success');
+    }
+    updateHeaderPoints();
+    clearCompose();
+  }).catch(function(err) {
+    showToast('发送成功，但云端同步失败，请检查网络', 'error');
+  });
+}
+
+// ==================== 收件箱 ====================
+function renderInbox(container) {
+  var user = getCurrentUser();
+  var mails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]')
+    .filter(function(m) { return m.to === user; })
+    .sort(function(a, b) { return b.time - a.time; });
+  
+  var html = '<div class="mail-list-header"><h3>📥 收件箱</h3>';
+  html += '<div style="display:flex;gap:8px;align-items:center">';
+  html += '<span class="mail-count">' + mails.length + ' 封</span>';
+  if (mails.length > 0) {
+    html += '<button class="btn btn-error" onclick="clearAllMails()" style="width:auto;padding:6px 14px;font-size:13px">🗑️ 清空</button>';
+  }
+  html += '</div></div>';
+  
+  if (mails.length === 0) {
+    html += '<div class="mail-empty"><div class="icon">📭</div><p>暂无邮件</p></div>';
+  } else {
+    mails.forEach(function(m) {
+      html += '<div class="mail-item ' + (m.read ? 'read' : 'unread') + '" onclick="openMail(' + m.id + ')">';
+      html += '<div class="mail-avatar">' + m.from.charAt(0).toUpperCase() + '</div>';
+      html += '<div class="mail-info">';
+      html += '<div class="mail-from">' + escapeHtml(m.from) + '</div>';
+      html += '<div class="mail-subject">' + escapeHtml(m.subject) + (m.encrypted ? ' 🔒' : '') + '</div>';
+      html += '</div>';
+      html += '<div class="mail-meta">';
+      html += '<div class="mail-time">' + formatTime(m.time) + '</div>';
+      if (m.encrypted) html += '<div class="mail-encrypted">加密</div>';
+      html += '</div></div>';
+    });
+  }
+  container.innerHTML = html;
+}
+
+var currentMail = null;
+function openMail(id) {
+  var mails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+  var mail = mails.find(function(m) { return m.id === id; });
+  if (!mail) return showToast('邮件不存在', 'error');
+  
+  currentMail = mail;
+  mail.read = true;
+  localStorage.setItem(EMAILS_KEY, JSON.stringify(mails));
+  syncToGist();
+  
+  var container = document.getElementById('appContent');
+  var html = '<div class="mail-detail">';
+  html += '<div class="mail-detail-header">';
+  html += '<div class="mail-avatar mail-detail-avatar">' + mail.from.charAt(0).toUpperCase() + '</div>';
+  html += '<div class="mail-detail-info">';
+  html += '<div class="mail-detail-from">' + escapeHtml(mail.from) + '</div>';
+  html += '<div class="mail-detail-time">' + new Date(mail.time).toLocaleString() + '</div>';
+  html += '</div></div>';
+  html += '<div class="mail-detail-subject">' + escapeHtml(mail.subject) + '</div>';
+  
+  if (mail.encrypted) {
+    html += '<div class="mail-encrypted-box">';
+    html += '<div class="icon">🔐</div>';
+    html += '<div class="title">此邮件已加密</div>';
+    html += '<div class="desc">点击下方按钮解密阅读（消耗' + POINTS_PER_DECRYPT + '积分）</div>';
+    html += '<button class="btn btn-primary" onclick="decryptMail()">🔓 解密阅读</button>';
+    html += '</div>';
+    html += '<div class="mail-decrypted-box hidden" id="decryptedBox">';
+    html += '<div class="label">✓ 解密成功</div>';
+    html += '<div class="content" id="decryptedContent"></div>';
+    html += '</div>';
+  } else {
+    html += '<div class="mail-detail-content">' + escapeHtml(mail.body) + '</div>';
+  }
+  
+  html += '</div>';
+  html += '<div style="display:flex;gap:10px;padding:0 16px 20px">';
+  html += '<button class="btn btn-primary" onclick="replyMail()">↩️ 回复</button>';
+  html += '<button class="btn btn-secondary" onclick="switchMainTab(\'inbox\')">← 返回</button>';
+  html += '</div>';
+  
+  container.innerHTML = html;
+}
+
+function decryptMail() {
+  if (!currentMail || !currentMail.encrypted) return;
+  
+  var user = getCurrentUser();
+  var data = getUserData(user);
+  if (data.points < POINTS_PER_DECRYPT) {
+    return showToast('积分不足，解密需' + POINTS_PER_DECRYPT + '积分', 'error');
+  }
+  
+  var parts = currentMail.body.split('_');
+  var result = '';
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i];
+    if (p.charAt(0) === '<' && p.indexOf('<U+') === 0) {
+      var match = p.match(/^<U\+([0-9A-Fa-f]+)>$/);
+      if (match) {
+        result += String.fromCodePoint(parseInt(match[1], 16));
+        continue;
+      }
+    }
+    var n = parseInt(p, 10);
+    if (!isNaN(n) && DT[n]) result += DT[n];
+  }
+  
+  document.getElementById('decryptedContent').textContent = result;
+  document.getElementById('decryptedBox').classList.remove('hidden');
+  
+  data.points -= POINTS_PER_DECRYPT;
+  saveUserData(user, data);
+  updateHeaderPoints();
+  showToast('解密成功（-' + POINTS_PER_DECRYPT + '积分）', 'success');
+}
+
+function replyMail() {
+  if (!currentMail) return;
+  switchMainTab('compose');
+  setTimeout(function() {
+    document.getElementById('composeTo').value = currentMail.from;
+    document.getElementById('composeSubject').value = 'Re: ' + currentMail.subject;
+    document.getElementById('composeBody').value = '';
+  }, 50);
+}
+
+function clearAllMails() {
+  if (!confirm('确定要清空所有邮件吗？此操作不可恢复！')) return;
+  var user = getCurrentUser();
+  var allMails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+  var filtered = allMails.filter(function(m) { return m.to !== user; });
+  localStorage.setItem(EMAILS_KEY, JSON.stringify(filtered));
+  syncToGist();
+  showToast('收件箱已清空', 'success');
+  renderInbox(document.getElementById('appContent'));
+}
+
+// ==================== 好友系统 ====================
+function renderFriends(container) {
+  var user = getCurrentUser();
+  var data = getUserData(user);
+  var friends = data ? (data.friends || []) : [];
+  
+  var html = '<div class="card"><div class="card-title">👥 我的好友</div>';
+  html += '<div class="friend-input-group">';
+  html += '<input type="text" class="input-field" id="friendInput" placeholder="输入用户名添加好友">';
+  html += '<button class="btn btn-success" onclick="addFriend()" style="width:auto;padding:14px 20px">➕ 添加</button>';
+  html += '</div>';
+  
+  if (friends.length === 0) {
+    html += '<div class="mail-empty"><div class="icon">👤</div><p>暂无好友，添加一个吧</p></div>';
+  } else {
+    friends.forEach(function(f) {
+      html += '<div class="friend-item">';
+      html += '<div class="friend-info">';
+      html += '<div class="friend-avatar">' + f.charAt(0).toUpperCase() + '</div>';
+      html += '<div class="friend-name">' + escapeHtml(f) + '</div>';
+      html += '</div>';
+      html += '<button class="friend-btn friend-btn-del" onclick="removeFriend(\'' + f + '\')">删除</button>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function addFriend() {
+  var name = document.getElementById('friendInput').value.trim();
+  if (!name) return showToast('请输入用户名', 'error');
+  
+  var user = getCurrentUser();
+  if (name === user) return showToast('不能添加自己', 'error');
+  
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  if (!users[name]) return showToast('用户不存在', 'error');
+  
+  var data = getUserData(user);
+  var friends = data.friends || [];
+  if (friends.indexOf(name) >= 0) return showToast('已是好友', 'error');
+  
+  friends.push(name);
+  data.friends = friends;
+  saveUserData(user, data);
+  
+  showToast('添加成功', 'success');
+  renderFriends(document.getElementById('appContent'));
+}
+
+function removeFriend(name) {
+  var user = getCurrentUser();
+  var data = getUserData(user);
+  data.friends = (data.friends || []).filter(function(f) { return f !== name; });
+  saveUserData(user, data);
+  showToast('已删除', 'success');
+  renderFriends(document.getElementById('appContent'));
+}
+
+// ==================== 个人中心 ====================
+function renderProfile(container) {
+  var user = getCurrentUser();
+  var data = getUserData(user);
+  
+  var html = '<div class="profile-header">';
+  html += '<div class="profile-avatar">' + user.charAt(0).toUpperCase() + '</div>';
+  html += '<div class="profile-name">' + escapeHtml(user) + '</div>';
+  html += '<div class="profile-id">ID: ' + simpleHash(user).substr(0, 8) + '</div>';
+  html += '</div>';
+  
+  html += '<div class="profile-stats">';
+  html += '<div class="stat-card"><div class="stat-value">' + data.points + '</div><div class="stat-label">积分</div></div>';
+  html += '<div class="stat-card"><div class="stat-value">' + (data.sentCount || 0) + '</div><div class="stat-label">发送</div></div>';
+  html += '<div class="stat-card"><div class="stat-value">' + (data.receivedCount || 0) + '</div><div class="stat-label">接收</div></div>';
+  html += '</div>';
+  
+  html += '<div class="menu-list">';
+  html += '<div class="menu-item" onclick="showRecharge()">';
+  html += '<div class="menu-item-left"><div class="menu-item-icon">💰</div><div class="menu-item-text">积分充值</div></div>';
+  html += '<div class="menu-item-arrow">›</div></div>';
+  html += '<div class="menu-item" onclick="showChangePwd()">';
+  html += '<div class="menu-item-left"><div class="menu-item-icon">🔑</div><div class="menu-item-text">修改密码</div></div>';
+  html += '<div class="menu-item-arrow">›</div></div>';
+  html += '<div class="menu-item" onclick="showContact()">';
+  html += '<div class="menu-item-left"><div class="menu-item-icon">📧</div><div class="menu-item-text">联系我们</div></div>';
+  html += '<div class="menu-item-arrow">›</div></div>';
+  html += '<div class="menu-item" onclick="showAbout()">';
+  html += '<div class="menu-item-left"><div class="menu-item-icon">📖</div><div class="menu-item-text">关于我们</div></div>';
+  html += '<div class="menu-item-arrow">›</div></div>';
+  html += '<div class="menu-item" onclick="syncFromCloud()">';
+  html += '<div class="menu-item-left"><div class="menu-item-icon">🔄</div><div class="menu-item-text">系统升级同步</div></div>';
+  html += '<div class="menu-item-arrow">›</div></div>';
+  html += '</div>';
+  
+  container.innerHTML = html;
+}
+
+// ==================== 充值 ====================
+var selectedAmount = 0;
+function showRecharge() {
+  var container = document.getElementById('appContent');
+  var html = '<div class="card"><div class="card-title">💰 积分充值</div>';
+  html += '<div class="recharge-amounts">';
+  [10, 30, 50, 100].forEach(function(amt) {
+    html += '<div class="recharge-item" onclick="selectRecharge(' + amt + ')" id="recharge' + amt + '">';
+    html += '<div class="amount">¥' + amt + '</div>';
+    html += '<div class="points">' + (amt * 100) + ' 积分</div></div>';
+  });
+  html += '</div>';
+  html += '<div class="recharge-custom">';
+  html += '<label>自定义金额</label>';
+  html += '<input type="number" class="input-field" id="customAmount" placeholder="输入金额" onfocus="clearRechargeSelection()">';
+  html += '</div>';
+  html += '<div class="recharge-info">';
+  html += '<div class="row"><span>充值比例</span><span>1元 = 100积分</span></div>';
+  html += '<div class="row"><span>到账积分</span><span id="totalPoints">0</span></div>';
+  html += '</div>';
+  html += '<button class="btn btn-gold" onclick="submitRecharge()">💳 立即充值</button>';
+  html += '<button class="btn btn-secondary" onclick="switchMainTab(\'profile\')" style="margin-top:10px">← 返回</button>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function selectRecharge(amt) {
+  selectedAmount = amt;
+  document.querySelectorAll('.recharge-item').forEach(function(el) { el.classList.remove('selected'); });
+  document.getElementById('recharge' + amt).classList.add('selected');
+  document.getElementById('customAmount').value = '';
+  document.getElementById('totalPoints').textContent = (amt * 100) + ' 积分';
+}
+
+function clearRechargeSelection() {
+  selectedAmount = 0;
+  document.querySelectorAll('.recharge-item').forEach(function(el) { el.classList.remove('selected'); });
+}
+
+function submitRecharge() {
+  var amt = selectedAmount || parseInt(document.getElementById('customAmount').value) || 0;
+  if (amt < 1) return showToast('请选择或输入金额', 'error');
+  
+  var user = getCurrentUser();
+  var key = 'recharge_' + user;
+  var list = JSON.parse(localStorage.getItem(key) || '[]');
+  list.push({
+    amount: amt,
+    points: amt * 100,
+    time: new Date().toLocaleString(),
+    status: 'pending'
+  });
+  localStorage.setItem(key, JSON.stringify(list));
+  showToast('充值申请已提交，请联系管理员', 'success');
+  switchMainTab('profile');
+}
+
+// ==================== 联系我们 ====================
+function showContact() {
+  var container = document.getElementById('appContent');
+  var html = '<div class="card" style="text-align:center;padding:24px">';
+  html += '<div style="font-size:32px;margin-bottom:16px">📧</div>';
+  html += '<div style="font-size:20px;font-weight:700;margin-bottom:20px">联系我们</div>';
+  html += '<div style="text-align:left;background:var(--surface-light);border-radius:12px;padding:16px;margin-bottom:16px">';
+  html += '<div style="margin-bottom:12px"><span style="color:var(--text-secondary)">📮 邮箱</span></div>';
+  html += '<div style="font-size:16px;font-weight:600;margin-bottom:16px">1073861760@qq.com</div>';
+  html += '<div style="margin-bottom:12px"><span style="color:var(--text-secondary)">💬 微信</span></div>';
+  html += '<div style="font-size:16px;font-weight:600;margin-bottom:16px">longhao142857</div>';
+  html += '<div style="margin-bottom:12px"><span style="color:var(--text-secondary)">🔐 暗语宝</span></div>';
+  html += '<div style="font-size:16px;font-weight:600">142857</div>';
+  html += '</div>';
+  html += '<button class="btn btn-secondary" onclick="switchMainTab(\'profile\')" style="margin-top:10px">← 返回</button>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ==================== 修改密码 ====================
+function showChangePwd() {
+  var container = document.getElementById('appContent');
+  var html = '<div class="card"><div class="card-title">🔑 修改密码</div>';
+  html += '<div class="compose-form">';
+  html += '<div class="input-group"><label>当前密码</label>';
+  html += '<input type="password" class="input-field" id="oldPwd" placeholder="输入当前密码"></div>';
+  html += '<div class="input-group"><label>新密码</label>';
+  html += '<input type="password" class="input-field" id="newPwd" placeholder="设置新密码（6位以上）"></div>';
+  html += '<div class="input-group"><label>确认新密码</label>';
+  html += '<input type="password" class="input-field" id="newPwd2" placeholder="再次输入新密码"></div>';
+  html += '<button class="btn btn-primary" onclick="doChangePwd()">✓ 确认修改</button>';
+  html += '<button class="btn btn-secondary" onclick="switchMainTab(\'profile\')" style="margin-top:10px">← 返回</button>';
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function doChangePwd() {
+  var oldPwd = document.getElementById('oldPwd').value;
+  var newPwd = document.getElementById('newPwd').value;
+  var newPwd2 = document.getElementById('newPwd2').value;
+  
+  if (!oldPwd || !newPwd || !newPwd2) return showToast('请填写所有字段', 'error');
+  if (newPwd !== newPwd2) return showToast('两次密码不一致', 'error');
+  if (newPwd.length < 6) return showToast('密码至少6位', 'error');
+  
+  var user = getCurrentUser();
+  var data = getUserData(user);
+  if (data.pass !== simpleHash(oldPwd)) return showToast('当前密码错误', 'error');
+  
+  data.pass = simpleHash(newPwd);
+  saveUserData(user, data);
+  showToast('密码修改成功', 'success');
+  switchMainTab('profile');
+}
+
+function clearAllData() {
+  if (!confirm('确定要清除所有数据吗？此操作不可恢复！')) return;
+  localStorage.removeItem(USERS_KEY);
+  localStorage.removeItem(EMAILS_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  showToast('数据已清除', 'success');
+  showLogin();
+}
+
+// ==================== 关于我们 ====================
+function showAbout() {
+  var container = document.getElementById('appContent');
+  var html = '<div class="card" style="text-align:center;padding:24px">';
+  html += '<div style="font-size:48px;margin-bottom:16px">🔐</div>';
+  html += '<div style="font-size:24px;font-weight:700;margin-bottom:8px">暗语宝</div>';
+  html += '<div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px">v1.0.0</div>';
+  html += '<div style="text-align:left;background:var(--surface-light);border-radius:12px;padding:16px;margin-bottom:16px;font-size:14px;line-height:1.8">';
+  html += '<p style="margin-bottom:12px"><b>🎯 产品定位</b><br>暗语宝是一款趣味加密通讯工具，让聊天更有趣、更有仪式感。</p>';
+  html += '<p style="margin-bottom:12px"><b>✨ 核心功能</b><br>• 私密加密邮件收发<br>• 独立加密/解密工具<br>• 好友系统<br>• 积分充值</p>';
+  html += '<p style="margin-bottom:12px"><b>👥 适用人群</b><br>• 情侣/暧昧期用户<br>• 学生群体<br>• 隐私敏感人群</p>';
+  html += '<p><b>📧 联系我们</b><br>邮箱：1073861760@qq.com<br>微信：longhao142857</p>';
+  html += '</div>';
+  html += '<button class="btn btn-secondary" onclick="switchMainTab(\'profile\')">← 返回</button>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ==================== 系统升级同步 ====================
+function syncFromCloud() {
+  var container = document.getElementById('appContent');
+  var html = '<div class="card"><div class="card-title">🔄 系统升级同步</div>';
+  html += '<div style="text-align:center;padding:20px 0">';
+  html += '<div style="font-size:48px;margin-bottom:16px">☁️</div>';
+  html += '<div style="font-size:16px;margin-bottom:8px">从云端同步最新数据</div>';
+  html += '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px">同步用户、邮件等数据到本地</div>';
+  html += '<button class="btn btn-primary" onclick="doSyncFromCloud()" id="syncBtn">🚀 开始同步</button>';
+  html += '<button class="btn btn-secondary" onclick="switchMainTab(\'profile\')" style="margin-top:10px">← 返回</button>';
+  html += '</div></div>';
+  container.innerHTML = html;
+}
+
+function doSyncFromCloud() {
+  var btn = document.getElementById('syncBtn');
+  btn.textContent = '同步中...';
+  btn.disabled = true;
+  
+  fetch(GIST_RAW_URL + '?t=' + Date.now(), {cache: 'no-store'})
+    .then(function(r) { return r.json(); })
+    .then(function(cloud) {
+      var localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+      var localMails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+      var cloudUsers = cloud.users || {};
+      var cloudMails = cloud.mails || [];
+      
+      var mergedUsers = {};
+      Object.keys(localUsers).forEach(function(u) { mergedUsers[u] = localUsers[u]; });
+      Object.keys(cloudUsers).forEach(function(u) {
+        if (!mergedUsers[u] || (cloudUsers[u].regTime && mergedUsers[u].regTime && cloudUsers[u].regTime > mergedUsers[u].regTime)) {
+          mergedUsers[u] = cloudUsers[u];
+        }
+      });
+      localStorage.setItem(USERS_KEY, JSON.stringify(mergedUsers));
+      
+      var allMails = localMails.concat(cloudMails);
+      var seen = {};
+      var deduped = allMails.filter(function(m) {
+        if (seen[m.id]) return false;
+        seen[m.id] = true;
+        return true;
+      });
+      localStorage.setItem(EMAILS_KEY, JSON.stringify(deduped));
+      
+      btn.textContent = '✅ 同步成功';
+      showToast('已从云端同步最新数据', 'success');
+      setTimeout(function() {
+        btn.textContent = '🚀 开始同步';
+        btn.disabled = false;
+      }, 2000);
+    })
+    .catch(function(err) {
+      btn.textContent = '🚀 开始同步';
+      btn.disabled = false;
+      showToast('同步失败，请检查网络', 'error');
+    });
+}
+
+
+// ==================== 管理员功能 ====================
+function doAdminLogin() {
+  var user = document.getElementById('adminUsername').value.trim();
+  var pass = document.getElementById('adminPassword').value;
+  if (!user || !pass) return showToast('请输入账号密码', 'error');
+  
+  var admin = JSON.parse(localStorage.getItem(ADMIN_KEY) || '{}');
+  if (user !== admin.username || simpleHash(pass) !== admin.pass) {
+    return showToast('账号或密码错误', 'error');
+  }
+  
+  showToast('登录成功', 'success');
+  showAdminPanel();
+}
+
+function adminLogout() {
+  showLogin();
+  showToast('已退出管理后台', 'success');
+}
+
+function showAdminChangePassModal() {
+  document.getElementById('adminOldPass').value = '';
+  document.getElementById('adminNewPass').value = '';
+  document.getElementById('adminConfirmPass').value = '';
+  document.getElementById('adminChangePassModal').classList.add('show');
+}
+
+function doAdminChangePass() {
+  var oldPass = document.getElementById('adminOldPass').value;
+  var newPass = document.getElementById('adminNewPass').value;
+  var confirmPass = document.getElementById('adminConfirmPass').value;
+  
+  if (!oldPass || !newPass || !confirmPass) {
+    return showToast('请填写所有字段', 'error');
+  }
+  
+  if (newPass.length < 6) {
+    return showToast('新密码至少6位', 'error');
+  }
+  
+  if (newPass !== confirmPass) {
+    return showToast('两次输入的密码不一致', 'error');
+  }
+  
+  var admin = JSON.parse(localStorage.getItem(ADMIN_KEY) || '{}');
+  if (simpleHash(oldPass) !== admin.pass) {
+    return showToast('当前密码错误', 'error');
+  }
+  
+  admin.pass = simpleHash(newPass);
+  localStorage.setItem(ADMIN_KEY, JSON.stringify(admin));
+  
+  hideModal('adminChangePassModal');
+  showToast('密码修改成功', 'success');
+}
+
+function adminSwitchTab(tab) {
+  document.querySelectorAll('.admin-nav-item').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.admin-view').forEach(function(el) { el.classList.remove('active'); });
+  
+  var navIndex = ['dash', 'users', 'mails', 'recharge'].indexOf(tab);
+  if (navIndex >= 0) document.querySelectorAll('.admin-nav-item')[navIndex].classList.add('active');
+  document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1) + 'View').classList.add('active');
+  
+  if (tab === 'dash') renderAdminDash();
+  if (tab === 'users') renderAdminUsers();
+  if (tab === 'mails') renderAdminMails();
+  if (tab === 'recharge') renderAdminRecharge();
+}
+
+function renderAdminDash() {
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  var mails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+  var pending = 0;
+  Object.keys(users).forEach(function(u) {
+    var list = JSON.parse(localStorage.getItem('recharge_' + u) || '[]');
+    pending += list.filter(function(r) { return r.status === 'pending'; }).length;
+  });
+  
+  document.getElementById('adminUserCount').textContent = Object.keys(users).length;
+  document.getElementById('adminMailCount').textContent = mails.length;
+  document.getElementById('adminPendingCount').textContent = pending;
+  
+  var html = '<div class="recharge-info">';
+  html += '<div class="row"><span>总用户数</span><span>' + Object.keys(users).length + '</span></div>';
+  html += '<div class="row"><span>邮件总数</span><span>' + mails.length + '</span></div>';
+  html += '<div class="row"><span>待审充值</span><span>' + pending + '</span></div>';
+  html += '</div>';
+  html += '<div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
+  html += '<button class="btn btn-primary" onclick="adminRefreshFromCloud()">🔄 从云端刷新</button>';
+  html += '<button class="btn btn-error" onclick="confirmResetData()">🗑️ 重置所有数据</button>';
+  html += '</div>';
+  document.getElementById('adminDashContent').innerHTML = html;
+}
+
+// ==================== 管理员云端同步 ====================
+function adminRefreshFromCloud() {
+  var btn = event.target;
+  btn.textContent = '\u540c\u6b65\u4e2d...';
+  btn.disabled = true;
+  var token = localStorage.getItem('anyu_gh_token') || 'YOUR_TOKEN_HERE';
+  fetch('https://api.github.com/gists/' + GIST_ID, {
+    headers: { 'Authorization': 'Bearer ' + token, 'X-GitHub-Api-Version': '2022-11-28' }
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(gist) {
+      var cloud = JSON.parse(gist.files['anyubao_data.json'].content);
+      var localUsers = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+      var localMails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+      var cloudUsers = cloud.users || {};
+      var cloudMails = cloud.mails || [];
+      var mergedUsers = {};
+      Object.keys(localUsers).forEach(function(u) { mergedUsers[u] = localUsers[u]; });
+      Object.keys(cloudUsers).forEach(function(u) {
+        if (!mergedUsers[u] || (cloudUsers[u].regTime && mergedUsers[u].regTime && cloudUsers[u].regTime > mergedUsers[u].regTime)) {
+          mergedUsers[u] = cloudUsers[u];
+        }
+      });
+      localStorage.setItem(USERS_KEY, JSON.stringify(mergedUsers));
+      var allMails = localMails.concat(cloudMails);
+      var seen = {};
+      var deduped = allMails.filter(function(m) {
+        if (seen[m.id]) return false;
+        seen[m.id] = true;
+        return true;
+      });
+      localStorage.setItem(EMAILS_KEY, JSON.stringify(deduped));
+      btn.textContent = '\u2705 \u5df2\u5237\u65b0';
+      showToast('\u5df2\u4ece\u4e91\u7aef\u5237\u65b0\uff0c\u6c47\u5408\u5b8c\u6210', 'success');
+      renderAdminUsers();
+      renderAdminMails();
+      renderAdminDash();
+      setTimeout(function() { btn.textContent = '\ud83d\udd04 \u4ece\u4e91\u7aef\u5237\u65b0'; btn.disabled = false; }, 2000);
+    })
+    .catch(function(err) {
+      btn.textContent = '\ud83d\udd04 \u4ece\u4e91\u7aef\u5237\u65b0';
+      btn.disabled = false;
+      showToast('\u4e91\u7aef\u540c\u6b65\u5931\u8d25: ' + (err.message || ''), 'error');
+    });
+}
+
+function confirmResetData() {
+  document.getElementById('resetDataModal').classList.add('show');
+}
+
+function doResetData() {
+  hideModal('resetDataModal');
+  localStorage.removeItem(USERS_KEY);
+  localStorage.removeItem(EMAILS_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  // 保留管理员账号
+  initAdmin();
+  syncToGist();
+  showToast('数据已重置', 'success');
+  renderAdminDash();
+  renderAdminUsers();
+  renderAdminMails();
+  renderAdminRecharge();
+}
+
+function renderAdminUsers() {
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  var html = '';
+  Object.keys(users).forEach(function(u) {
+    var d = users[u];
+    html += '<div class="friend-item">';
+    html += '<div class="friend-info">';
+    html += '<div class="friend-avatar">' + u.charAt(0).toUpperCase() + '</div>';
+    html += '<div><div class="friend-name">' + escapeHtml(u) + '</div>';
+    html += '<div style="font-size:11px;color:var(--text-secondary)">密码:' + (d.pass || '-') + '</div>';
+    html += '<div style="font-size:11px;color:var(--text-secondary)">积分:' + d.points + ' | 注册:' + (d.regTime || '-') + '</div></div>';
+    html += '</div>';
+    html += '<div class="friend-actions">';
+    html += '<button class="friend-btn friend-btn-del" onclick="confirmDeleteUser(\'' + u.replace(/'/g, "\\'") + '\')">🗑️ 删除</button>';
+    html += '</div></div>';
+  });
+  document.getElementById('adminUserList').innerHTML = html || '<div class="mail-empty"><p>暂无用户</p></div>';
+}
+
+function renderAdminMails() {
+  var mails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]').sort(function(a, b) { return b.time - a.time; });
+  var html = '';
+  mails.slice(0, 50).forEach(function(m) {
+    html += '<div class="friend-item">';
+    html += '<div class="friend-info">';
+    html += '<div class="friend-name">' + escapeHtml(m.from) + ' → ' + escapeHtml(m.to) + '</div>';
+    html += '<div style="font-size:11px;color:var(--text-secondary)">' + escapeHtml(m.subject) + ' | ' + formatTime(m.time) + (m.encrypted ? ' 🔒' : '') + '</div>';
+    html += '</div></div>';
+  });
+  document.getElementById('adminMailList').innerHTML = html || '<div class="mail-empty"><p>暂无邮件</p></div>';
+}
+
+function renderAdminRecharge() {
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  var html = '';
+  var hasPending = false;
+  
+  Object.keys(users).forEach(function(u) {
+    var list = JSON.parse(localStorage.getItem('recharge_' + u) || '[]');
+    list.forEach(function(r, idx) {
+      if (r.status === 'pending') {
+        hasPending = true;
+        html += '<div class="friend-item">';
+        html += '<div class="friend-info">';
+        html += '<div class="friend-name">' + escapeHtml(u) + ' - ¥' + r.amount + ' (' + r.points + '积分)</div>';
+        html += '<div style="font-size:11px;color:var(--text-secondary)">' + r.time + '</div>';
+        html += '</div>';
+        html += '<div class="friend-actions">';
+        html += '<button class="friend-btn friend-btn-add" onclick="approveRecharge(\'' + u + '\',' + idx + ')">批准</button>';
+        html += '<button class="friend-btn friend-btn-del" onclick="rejectRecharge(\'' + u + '\',' + idx + ')">拒绝</button>';
+        html += '</div></div>';
+      }
+    });
+  });
+  
+  document.getElementById('adminRechargeList').innerHTML = hasPending ? html : '<div class="mail-empty"><p>暂无待审充值</p></div>';
+}
+
+function approveRecharge(user, idx) {
+  var list = JSON.parse(localStorage.getItem('recharge_' + user) || '[]');
+  if (!list[idx]) return;
+  list[idx].status = 'approved';
+  localStorage.setItem('recharge_' + user, JSON.stringify(list));
+  
+  var data = getUserData(user);
+  if (data) {
+    data.points += list[idx].points;
+    saveUserData(user, data);
+  }
+  showToast('已批准充值', 'success');
+  renderAdminRecharge();
+  renderAdminDash();
+}
+
+function rejectRecharge(user, idx) {
+  var list = JSON.parse(localStorage.getItem('recharge_' + user) || '[]');
+  if (!list[idx]) return;
+  list[idx].status = 'rejected';
+  localStorage.setItem('recharge_' + user, JSON.stringify(list));
+  showToast('已拒绝充值', 'success');
+  renderAdminRecharge();
+}
+
+function confirmDeleteUser(username) {
+  var modal = document.getElementById('deleteUserModal');
+  document.getElementById('deleteUserName').textContent = username;
+  modal.dataset.username = username;
+  modal.classList.add('show');
+}
+
+function doDeleteUser() {
+  var modal = document.getElementById('deleteUserModal');
+  var username = modal.dataset.username;
+  hideModal('deleteUserModal');
+  deleteUser(username);
+}
+
+function deleteUser(username) {
+  // 删除用户数据
+  var users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+  if (!users[username]) { showToast('用户不存在', 'error'); return; }
+  if (username === 'admin') { showToast('不能删除管理员账户', 'error'); return; }
+  delete users[username];
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  syncToGist();
+  
+  // 删除该用户的所有邮件（作为发送方或接收方）
+  var mails = JSON.parse(localStorage.getItem(EMAILS_KEY) || '[]');
+  mails = mails.filter(function(m) { return m.from !== username && m.to !== username; });
+  localStorage.setItem(EMAILS_KEY, JSON.stringify(mails));
+  syncToGist();
+  
+  // 删除该用户的充值记录
+  
+  // 如果当前登录的就是被删除的用户，强制退出
+  var session = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+  if (session.user === username) {
+    localStorage.removeItem(SESSION_KEY);
+    showToast('该用户已被删除', 'success');
+    location.reload();
+    return;
+  }
+  
+  showToast('已删除用户 ' + username, 'success');
+  renderAdminUsers();
+  renderAdminDash();
+}
+
+// ==================== 启动 ====================
+init();
+
+// ==================== PWA 离线支持 ====================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('暗语宝PWA已启用');
+    }).catch(err => {
+      console.log('PWA注册失败:', err);
+    });
+  });
+}
+</script>
+</body>
+</html>
